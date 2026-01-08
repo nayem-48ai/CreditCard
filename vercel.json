@@ -12,13 +12,13 @@
   ],
   "functions": {
     "api/bot.js": {
-      "memory": 512,  
-      "maxDuration": 30 
+      "memory": 512,
+      "maxDuration": 30
     }
   },
   "build": {
     "env": {
-      "NODE_VERSION": "20" 
+      "NODE_VERSION": "20"
     }
   }
 }
