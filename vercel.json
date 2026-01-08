@@ -12,7 +12,7 @@
   ],
   "functions": {
     "api/bot.js": {
-      "runtime": "nodejs18.x",
+      "runtime": "@vercel/node@18.x",
       "memory": 512,  
       "maxDuration": 30 
     }
