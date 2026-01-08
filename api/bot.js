@@ -1,8 +1,6 @@
 const { Telegraf, Markup } = require('telegraf');
 const axios = require('axios');
-const fs = require('fs');
-const path = require('path');
-const { parse } = require('csv-parse/sync');
+const { parse } = require('csv-parse/sync'); // For parsing CSV content
 
 // Replace with your actual Bot Token and Admin ID
 const BOT_TOKEN = process.env.BOT_TOKEN || 'YOUR_BOT_TOKEN_HERE'; // Get this from BotFather
@@ -10,29 +8,54 @@ const ADMIN_ID = process.env.ADMIN_ID ? parseInt(process.env.ADMIN_ID) : 1234567
 
 const bot = new Telegraf(BOT_TOKEN);
 
-// Load BIN data from CSV
-let binData = new Map();
-async function loadBinData() {
-    try {
-        const csvPath = path.resolve(__dirname, '../public/bin-list-data.csv');
-        const fileContent = fs.readFileSync(csvPath, 'utf8');
-        const records = parse(fileContent, {
-            columns: true,
-            skip_empty_lines: true
-        });
+// GitHub raw file URLs for the BIN data
+const BIN_DATA_URLS = [
+    'https://raw.githubusercontent.com/nayem-48ai/nayem-48ai/d985a3bba59c0a36706e71e48630e1ee9c6d3228/bin-list-data0.csv',
+    'https://raw.githubusercontent.com/nayem-48ai/nayem-48ai/d985a3bba59c0a36706e71e48630e1ee9c6d3228/bin-list-data1.csv'
+];
 
-        records.forEach(row => {
-            if (row.BIN) {
-                binData.set(row.BIN.trim(), row);
-            }
+let binData = new Map();
+let isBinDataLoaded = false; // Flag to check if data is loaded
+
+async function loadBinData() {
+    if (isBinDataLoaded && binData.size > 0) {
+        console.log('BIN data already loaded.');
+        return;
+    }
+
+    console.log('Loading BIN data from GitHub...');
+    binData.clear(); // Clear existing data if any
+
+    try {
+        const fetchPromises = BIN_DATA_URLS.map(url => axios.get(url, { responseType: 'text' }));
+        const responses = await Promise.all(fetchPromises);
+
+        responses.forEach((response, index) => {
+            const fileContent = response.data;
+            const records = parse(fileContent, {
+                columns: true,
+                skip_empty_lines: true
+            });
+
+            records.forEach(row => {
+                if (row.BIN) {
+                    binData.set(row.BIN.trim(), row);
+                }
+            });
+            console.log(`Loaded ${records.length} BINs from ${BIN_DATA_URLS[index]}. Total: ${binData.size}`);
         });
-        console.log(`Loaded ${binData.size} BINs.`);
+        isBinDataLoaded = true;
+        console.log(`Finished loading all BIN data. Total unique BINs: ${binData.size}`);
     } catch (error) {
-        console.error('Error loading BIN data:', error);
+        console.error('Error loading BIN data from GitHub:', error.message);
+        // Attempt to retry after some time or inform admin
+        setTimeout(loadBinData, 60000); // Retry after 1 minute
     }
 }
 
-// Ensure BIN data is loaded when the bot starts
+// Initial load of BIN data, and ensure it reloads if the function gets cold started
+// Vercel serverless functions are stateless, so data might need to be reloaded on each invocation
+// For a large dataset, this can be slow. Consider a persistent cache/database if performance is critical.
 loadBinData();
 
 // Helper function for Luhn algorithm validation
@@ -87,6 +110,20 @@ function getRandomCardDetails() {
     return { mm, yy, cvv };
 }
 
+// Middleware to ensure BIN data is loaded before processing commands
+bot.use(async (ctx, next) => {
+    if (!isBinDataLoaded) {
+        await ctx.reply('BIN ডেটা লোড হচ্ছে, অনুগ্রহ করে একটু অপেক্ষা করুন...');
+        await loadBinData(); // Try to load again if not loaded
+        if (!isBinDataLoaded) {
+            return ctx.reply('BIN ডেটা লোড করতে ব্যর্থ হয়েছে। অনুগ্রহ করে পরে আবার চেষ্টা করুন।');
+        } else {
+            ctx.reply('BIN ডেটা সফলভাবে লোড হয়েছে। এখন আপনি আপনার কমান্ড ব্যবহার করতে পারেন।');
+        }
+    }
+    return next();
+});
+
 // --- Bot Commands ---
 
 bot.start((ctx) => {
@@ -130,7 +167,7 @@ bot.command('menu', (ctx) => {
 📌 Menu
 └ Command : \`/menu\` / \`/help\`
 
-${ctx.from.id === ADMIN_ID ? '\nFor Admin:\n/broadcast <text or file>' : ''}
+${ctx.from.id === ADMIN_ID ? '\n*For Admin:*\n`/broadcast <text or file>`' : ''}
     `;
     ctx.replyWithMarkdown(menuText);
 });
