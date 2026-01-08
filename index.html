@@ -818,9 +818,96 @@
       `;
       
       try {
-        const response = await fetch('./bin-list-data.csv', {
-          cache: 'force-cache'
-        });
+        async function checkBIN() {
+  // ... existing code ...
+
+  resultsDiv.innerHTML = `
+    <div class="loading-container">
+      <div class="loading-spinner"></div>
+      <p>Loading BIN data from GitHub...</p>
+      <p style="font-size: 0.8em; margin-top: 10px;">Searching through ${bins.length} BIN${bins.length > 1 ? 's' : ''}</p>
+    </div>
+  `;
+
+  try {
+    const binDataUrls = [
+      'https://raw.githubusercontent.com/nayem-48ai/nayem-48ai/d985a3bba59c0a36706e71e48630e1ee9c6d3228/bin-list-data0.csv',
+      'https://raw.githubusercontent.com/nayem-48ai/nayem-48ai/d985a3bba59c0a36706e71e48630e1ee9c6d3228/bin-list-data1.csv'
+    ];
+
+    let binMap = new Map();
+    const fetchPromises = binDataUrls.map(url => fetch(url).then(res => res.text()));
+    const responses = await Promise.all(fetchPromises);
+
+    responses.forEach(data => {
+        const rows = data.split('\n').filter(row => row.trim());
+        const headers = rows[0].split(',').map(header => header.trim());
+        for (let i = 1; i < rows.length; i++) {
+            const columns = rows[i].split(',').map(col => col.trim().replace(/"/g, ''));
+            const csvBin = columns[0];
+            if (csvBin) {
+                let binInfo = {};
+                headers.forEach((header, index) => {
+                    binInfo[header] = columns[index] || 'Unknown';
+                });
+                binMap.set(csvBin, binInfo);
+            }
+        }
+    });
+    
+    await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate loading time
+
+    let results = '';
+    bins.forEach(bin => {
+        const binInfo = binMap.get(bin);
+        
+        if (binInfo) {
+            results += `
+              <div class="result-card">
+                <h3>BIN: ${bin}</h3>
+                <p><strong>Brand:</strong> ${binInfo.Brand || 'Unknown'}</p>
+                <p><strong>Type:</strong> ${binInfo.Type || 'Unknown'}</p>
+                <p><strong>Category:</strong> ${binInfo.Category || 'Unknown'}</p>
+                <p><strong>Issuer:</strong> ${binInfo.Issuer || 'Unknown'}</p>
+                <p><strong>Country:</strong> ${binInfo.CountryName || 'Unknown'}</p>
+              </div>
+            `;
+        } else {
+            results += `
+              <div class="result-card">
+                <h3>BIN: ${bin}</h3>
+                <p style="color: #fc8181;">BIN not found in database</p>
+                <p style="font-size: 0.8em; color: #718096;">Try popular BINs like: 424242, 400000, or 401200</p>
+              </div>
+            `;
+        }
+    });
+    
+    // ... rest of the checkBIN function (copy/download buttons and footer) ...
+    results += `
+      <div style="display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap;">
+        <button class="pulse" style="background: linear-gradient(135deg, #4c1d95, #6d28d9);" onclick="copyBINResults()">Copy All</button>
+        <button class="pulse" style="background: linear-gradient(135deg, #2dd4bf, #14b8a6);" onclick="downloadBINResults()">Download Results</button>
+      </div>
+      <div style="margin-top: 15px; font-size: 0.8em; color: #718096; text-align: center;">
+        Database: ${binMap.size} BINs | Checked: ${bins.length} queries
+      </div>
+    `;
+    
+    resultsDiv.innerHTML = results;
+
+  } catch (error) {
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    resultsDiv.innerHTML = `
+      <div class="result-card" style="color: #fc8181;">
+        Error loading BIN data from GitHub: ${error.message}
+        <p style="margin-top: 10px; font-size: 0.9em;">
+          Make sure the GitHub URLs are correct and accessible.
+        </p>
+      </div>
+    `;
+  }
+}
         const data = await response.text();
         
         const rows = data.split('\n').filter(row => row.trim());
