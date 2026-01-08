@@ -4,15 +4,17 @@
   ],
   "headers": [
     {
-      "source": "/public/bin-list-data.csv",
+      "source": "/public/**",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=3600, must-revalidate" }
+        { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }
       ]
     }
   ],
   "functions": {
     "api/bot.js": {
-      "runtime": "nodejs18.x"
+      "runtime": "nodejs18.x",
+      "memory": 512,  
+      "maxDuration": 30 
     }
   }
 }
