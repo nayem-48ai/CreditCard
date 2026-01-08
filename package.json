@@ -1,5 +1,5 @@
 {
-  "name": "credit-card-gen",
+  "name": "credit-card-tools",
   "version": "1.0.0",
   "description": "Credit Card Tools Bot and Web App",
   "main": "api/bot.js",
@@ -7,7 +7,7 @@
     "start": "node api/bot.js"
   },
   "engines": {
-    "node": "20.x"  // 18.x এর পরিবর্তে 20.x ব্যবহার করুন। 24.x ও ব্যবহার করতে পারেন, তবে 20.x অধিক স্থিতিশীল।
+    "node": "20.x"
   },
   "dependencies": {
     "axios": "^1.6.8",
