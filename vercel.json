@@ -12,9 +12,13 @@
   ],
   "functions": {
     "api/bot.js": {
-      "runtime": "@vercel/node@18.x",
       "memory": 512,  
       "maxDuration": 30 
+    }
+  },
+  "build": {
+    "env": {
+      "NODE_VERSION": "18"
     }
   }
 }
