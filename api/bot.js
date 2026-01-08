@@ -3,8 +3,8 @@ const axios = require('axios');
 const { parse } = require('csv-parse/sync'); // For parsing CSV content
 
 // Replace with your actual Bot Token and Admin ID
-const BOT_TOKEN = process.env.BOT_TOKEN || 'YOUR_BOT_TOKEN_HERE'; // Get this from BotFather
-const ADMIN_ID = process.env.ADMIN_ID ? parseInt(process.env.ADMIN_ID) : 123456789; // Replace with your Telegram Admin ID
+const BOT_TOKEN = process.env.BOT_TOKEN || '8475878795:AAFTNjSJGdo9GfS3TDPR0X8IUA9ldBLPS3Q'; // Get this from BotFather
+const ADMIN_ID = process.env.ADMIN_ID ? parseInt(process.env.ADMIN_ID) : 5967798239; // Replace with your Telegram Admin ID
 
 const bot = new Telegraf(BOT_TOKEN);
 
