@@ -1,0 +1,18 @@
+{
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/public/$1" }
+  ],
+  "headers": [
+    {
+      "source": "/public/bin-list-data.csv",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=3600, must-revalidate" }
+      ]
+    }
+  ],
+  "functions": {
+    "api/bot.js": {
+      "runtime": "nodejs18.x"
+    }
+  }
+}
